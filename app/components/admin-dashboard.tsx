@@ -34,9 +34,9 @@ function AdminBadge({ children, variant }: { children: ReactNode; variant: Badge
   );
 }
 
-function ProductThumb({ src, alt, size = "md" }: { src: string; alt: string; size?: "sm" | "md" | "lg" }) {
+function ProductThumb({ src, alt, size = "md" }: { src: string; alt: string; size?: "sm" | "md" }) {
   const [failed, setFailed] = useState(false);
-  const box = size === "sm" ? "size-12" : size === "lg" ? "h-48 w-full" : "h-28 w-full";
+  const box = size === "sm" ? "size-12" : "h-28 w-full";
 
   if (!src || failed) {
     return (
@@ -56,86 +56,6 @@ function ProductThumb({ src, alt, size = "md" }: { src: string; alt: string; siz
   );
 }
 
-function ProductDetailPanel({
-  product,
-  onClose,
-  onEdit,
-  onDeactivate,
-  onActivate,
-  busyAction,
-}: {
-  product: Product;
-  onClose: () => void;
-  onEdit: () => void;
-  onDeactivate: () => void;
-  onActivate: () => void;
-  busyAction: string | null;
-}) {
-  const extraImages = (product.images || []).filter((url) => url && url !== product.thumbnail);
-
-  return (
-    <div className="panel mt-4 grid gap-4 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-bold">Detalle del producto</h3>
-          <AdminBadge variant={product.isActive ? "active" : "inactive"}>
-            {product.isActive ? "Activo" : "Inactivo"}
-          </AdminBadge>
-        </div>
-        <button className="text-sm font-medium text-[var(--mute)] underline" type="button" onClick={onClose}>
-          Cerrar
-        </button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,200px)_1fr]">
-        <ProductThumb src={product.thumbnail} alt={product.name} size="lg" />
-        <div className="grid gap-2 text-sm">
-          <p className="text-xl font-bold">{product.name}</p>
-          {product.brand ? <p className="text-[var(--mute)]">Marca: {product.brand}</p> : null}
-          <p className="text-[var(--mute)]">
-            {product.category} &middot; Stock: <strong className="text-[var(--ink)]">{product.stock}</strong> &middot; Precio:{" "}
-            <strong className="text-[var(--ink)]">S/{product.price}</strong>
-          </p>
-          <p className="text-xs text-[var(--stone)]">ID: {product.id}</p>
-        </div>
-      </div>
-
-      <div>
-        <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--mute)]">Descripcion</p>
-        <p className="text-sm leading-relaxed text-[var(--charcoal)]">{product.description}</p>
-      </div>
-
-      {extraImages.length > 0 ? (
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--mute)]">Imagenes adicionales</p>
-          <div className="flex flex-wrap gap-2">
-            {extraImages.map((url) => (
-              <a key={url} href={url} target="_blank" rel="noreferrer" className="block size-16 overflow-hidden rounded-[12px] border border-[var(--hairline-soft)]">
-                <img src={url} alt="" className="size-full object-cover" />
-              </a>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="flex flex-wrap gap-2 border-t border-[var(--hairline-soft)] pt-4">
-        <button className="rounded-full bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100" type="button" onClick={onEdit} disabled={busyAction !== null}>
-          Editar
-        </button>
-        {product.isActive ? (
-          <button className="rounded-full bg-red-50 px-4 py-2 text-xs font-bold text-[var(--sale)] hover:bg-red-100" type="button" onClick={onDeactivate} disabled={busyAction !== null}>
-            Desactivar
-          </button>
-        ) : (
-          <button className="rounded-full bg-green-50 px-4 py-2 text-xs font-bold text-[var(--success)] hover:bg-green-100" type="button" onClick={onActivate} disabled={busyAction !== null}>
-            Activar
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -146,7 +66,6 @@ export function AdminDashboard() {
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const isAdmin = user?.role === "admin";
@@ -246,7 +165,7 @@ export function AdminDashboard() {
           method: "PATCH",
           body: JSON.stringify(data),
         });
-        syncDetailProduct(response.data);
+        setProducts((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
         toast("Producto actualizado", "success");
       } else {
         const response = await apiFetch<Product>("/api/admin/products", {
@@ -254,7 +173,6 @@ export function AdminDashboard() {
           body: JSON.stringify(data),
         });
         setProducts((prev) => [response.data, ...prev].slice(0, 60));
-        setDetailProduct(response.data);
         toast("Producto creado", "success");
       }
       formElement.reset();
@@ -262,9 +180,6 @@ export function AdminDashboard() {
       setPreviewUrl("");
       setFormMode("create");
       setEditingProduct(null);
-      if (formMode === "edit" && editingProduct?.id === detailProduct?.id) {
-        setDetailProduct(null);
-      }
     } catch (err) {
       toast(err instanceof Error ? err.message : "Error guardando producto", "error");
     } finally {
@@ -280,14 +195,9 @@ export function AdminDashboard() {
     document.getElementById("admin-product-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function openDetails(product: Product) {
-    setDetailProduct(product);
-  }
-
   function startEdit(product: Product) {
     setEditingProduct(product);
     setFormMode("edit");
-    setDetailProduct(product);
     document.getElementById("admin-product-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -298,16 +208,11 @@ export function AdminDashboard() {
     formRef.current?.reset();
   }
 
-  function syncDetailProduct(updated: Product) {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    setDetailProduct((current) => (current?.id === updated.id ? updated : current));
-  }
-
   async function deactivateProduct(id: string) {
     setBusyAction(`product:${id}`);
     try {
       const response = await apiFetch<Product>(`/api/admin/products/${id}`, { method: "DELETE" });
-      syncDetailProduct(response.data);
+      setProducts((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
       toast("Producto desactivado", "info");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Error desactivando producto", "error");
@@ -323,7 +228,7 @@ export function AdminDashboard() {
         method: "PATCH",
         body: JSON.stringify({ isActive: true }),
       });
-      syncDetailProduct(response.data);
+      setProducts((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
       toast("Producto reactivado", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Error reactivando producto", "error");
@@ -398,27 +303,18 @@ export function AdminDashboard() {
                 <article
                   key={product.id}
                   className={`flex items-center gap-3 rounded-[16px] border p-3 transition-colors ${
-                    detailProduct?.id === product.id
-                      ? "border-[var(--info)] bg-blue-50/40"
-                      : editingProduct?.id === product.id
-                        ? "border-[var(--ink)] bg-[var(--soft-cloud)]"
-                        : "border-[var(--hairline-soft)]"
+                    editingProduct?.id === product.id ? "border-[var(--ink)] bg-[var(--soft-cloud)]" : "border-[var(--hairline-soft)]"
                   }`}
                 >
-                  <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => openDetails(product)} disabled={busyAction !== null}>
-                    <ProductThumb src={product.thumbnail} alt={product.name} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <p className="truncate text-sm font-medium">{product.name}</p>
-                        {!product.isActive ? <AdminBadge variant="inactive">Inactivo</AdminBadge> : null}
-                      </div>
-                      <p className="text-xs text-[var(--mute)]">{product.category} &middot; Stock: {product.stock} &middot; S/{product.price}</p>
+                  <ProductThumb src={product.thumbnail} alt={product.name} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="truncate text-sm font-medium">{product.name}</p>
+                      {!product.isActive ? <AdminBadge variant="inactive">Inactivo</AdminBadge> : null}
                     </div>
-                  </button>
+                    <p className="text-xs text-[var(--mute)]">{product.category} &middot; Stock: {product.stock} &middot; S/{product.price}</p>
+                  </div>
                   <div className="flex shrink-0 flex-wrap gap-1">
-                    <button className="rounded-full bg-[var(--soft-cloud)] px-3 py-1.5 text-xs font-bold text-[var(--charcoal)] transition-colors hover:bg-[var(--hairline-soft)] disabled:opacity-50" type="button" onClick={() => openDetails(product)} disabled={busyAction !== null}>
-                      Detalles
-                    </button>
                     <button className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50" type="button" onClick={() => startEdit(product)} disabled={busyAction !== null}>
                       Editar
                     </button>
@@ -436,17 +332,6 @@ export function AdminDashboard() {
               ))}
             </div>
           )}
-
-          {detailProduct ? (
-            <ProductDetailPanel
-              product={detailProduct}
-              onClose={() => setDetailProduct(null)}
-              onEdit={() => startEdit(detailProduct)}
-              onDeactivate={() => deactivateProduct(detailProduct.id)}
-              onActivate={() => activateProduct(detailProduct.id)}
-              busyAction={busyAction}
-            />
-          ) : null}
         </section>
 
         {/* Product form */}

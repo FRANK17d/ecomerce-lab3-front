@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { useCart } from "../lib/cart-context";
 import { useToast } from "../lib/toast-context";
 import type { Cart } from "../lib/types";
 
 export function CartView() {
   const { user, loading: authLoading } = useAuth();
+  const { applyCart } = useCart();
   const { toast } = useToast();
   const [cart, setCart] = useState<Cart>({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
@@ -20,11 +22,17 @@ export function CartView() {
 
     let active = true;
     apiFetch<Cart>("/api/cart")
-      .then((res) => { if (active) setCart(res.data); })
+      .then((res) => {
+        if (active) {
+          setCart(res.data);
+          applyCart(res.data);
+        }
+      })
       .catch((err) => { if (active) toast(err instanceof Error ? err.message : "Error cargando bolsa", "error"); })
       .finally(() => { if (active) setLoading(false); });
 
     return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, toast]);
 
   async function updateQuantity(id: string, quantity: number) {
@@ -35,6 +43,7 @@ export function CartView() {
         body: JSON.stringify({ quantity }),
       });
       setCart(res.data);
+      applyCart(res.data);
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo actualizar", "error");
     } finally {
@@ -47,6 +56,7 @@ export function CartView() {
     try {
       const res = await apiFetch<Cart>(`/api/cart/items/${id}`, { method: "DELETE" });
       setCart(res.data);
+      applyCart(res.data);
       toast("Producto eliminado de la bolsa", "info");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Error eliminando", "error");
@@ -59,7 +69,9 @@ export function CartView() {
     setPendingAction("checkout");
     try {
       await apiFetch("/api/orders", { method: "POST" });
-      setCart({ items: [], total: 0 });
+      const emptyCart = { items: [], total: 0 };
+      setCart(emptyCart);
+      applyCart(emptyCart);
       toast("Pedido creado correctamente", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo crear el pedido", "error");

@@ -5,11 +5,13 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { useCart } from "../lib/cart-context";
 import { useToast } from "../lib/toast-context";
 import type { Product } from "../lib/types";
 
 export function Storefront() {
   const { user } = useAuth();
+  const { refreshCart } = useCart();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -92,6 +94,7 @@ export function Storefront() {
         method: "POST",
         body: JSON.stringify({ productId, quantity: 1 }),
       });
+      await refreshCart();
       toast("Producto agregado a tu bolsa", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo agregar", "error");
@@ -174,14 +177,20 @@ export function Storefront() {
           <div className="grid gap-3 md:grid-cols-3">
             {featuredProducts.map((product) => (
               <article key={product.id} className="editorial-card">
+                <Link href={`/products/${product.id}`} className="absolute inset-0 z-[1]" aria-label={`Ver detalles de ${product.name}`} />
                 <Image src={product.thumbnail} alt={product.name} fill className="object-contain p-8" sizes="(min-width: 768px) 33vw, 100vw" />
                 <div className="absolute inset-x-0 bottom-0 z-10 p-5 text-[var(--canvas)]">
                   <p className="text-xs font-medium uppercase text-white/75">{prettyCategory(product.category)}</p>
                   <h3 className="mt-1 text-lg font-bold leading-tight">{product.name}</h3>
                   <p className="mt-1 text-lg font-bold">S/{product.price}</p>
-                  <button className="mt-3 rounded-full bg-[var(--canvas)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80 disabled:opacity-60" type="button" onClick={() => addToCart(product.id)} disabled={pendingCartIds.has(product.id)}>
-                    {pendingCartIds.has(product.id) ? "Agregando..." : "Agregar a bolsa"}
-                  </button>
+                  <div className="relative z-10 mt-3 flex flex-wrap gap-2">
+                    <Link className="rounded-full border border-white/30 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10" href={`/products/${product.id}`}>
+                      Ver detalles
+                    </Link>
+                    <button className="rounded-full bg-[var(--canvas)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition-opacity hover:opacity-80 disabled:opacity-60" type="button" onClick={() => addToCart(product.id)} disabled={pendingCartIds.has(product.id)}>
+                      {pendingCartIds.has(product.id) ? "Agregando..." : "Agregar a bolsa"}
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -244,23 +253,26 @@ export function Storefront() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product, index) => (
               <article key={product.id} className="product-card flex flex-col">
-                <div className="product-image-stage relative aspect-[4/3]">
-                  <Image src={product.thumbnail} alt={product.name} fill className="object-contain" loading={index === 0 ? "eager" : "lazy"} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
-                  {index < 4 ? <span className="absolute left-3 top-3 rounded-full bg-[var(--canvas)] px-3 py-1 text-xs font-medium shadow-sm">Nuevo</span> : null}
-                </div>
-                <div className="mt-3 flex flex-1 flex-col gap-2 px-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[var(--mute)]">{prettyCategory(product.category)}</p>
-                  <h2 className="text-sm font-medium leading-5 text-[var(--ink)]">{product.name}</h2>
-                  <p className="line-clamp-2 text-xs leading-4 text-[var(--stone)]">{product.description}</p>
-                  <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                    <div>
-                      <p className="text-lg font-bold text-[var(--ink)]">S/{product.price}</p>
-                      <p className="text-xs text-[var(--success)]">{product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}</p>
-                    </div>
-                    <button className="button-primary !min-h-[40px] !px-4 !text-sm" onClick={() => addToCart(product.id)} type="button" disabled={product.stock === 0 || pendingCartIds.has(product.id)}>
-                      {pendingCartIds.has(product.id) ? "Agregando..." : product.stock > 0 ? "Agregar" : "Sin stock"}
-                    </button>
+                <Link href={`/products/${product.id}`} className="block">
+                  <div className="product-image-stage relative aspect-[4/3]">
+                    <Image src={product.thumbnail} alt={product.name} fill className="object-contain" loading={index === 0 ? "eager" : "lazy"} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
+                    {index < 4 ? <span className="absolute left-3 top-3 rounded-full bg-[var(--canvas)] px-3 py-1 text-xs font-medium shadow-sm">Nuevo</span> : null}
                   </div>
+                  <div className="mt-3 flex flex-1 flex-col gap-2 px-1">
+                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--mute)]">{prettyCategory(product.category)}</p>
+                    <h2 className="text-sm font-medium leading-5 text-[var(--ink)]">{product.name}</h2>
+                    <p className="line-clamp-2 text-xs leading-4 text-[var(--stone)]">{product.description}</p>
+                    <p className="text-xs font-medium text-[var(--mute)] underline">Ver detalles</p>
+                  </div>
+                </Link>
+                <div className="mt-2 flex items-center justify-between gap-2 px-1 pb-1">
+                  <div>
+                    <p className="text-lg font-bold text-[var(--ink)]">S/{product.price}</p>
+                    <p className="text-xs text-[var(--success)]">{product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}</p>
+                  </div>
+                  <button className="button-primary !min-h-[40px] !px-4 !text-sm" onClick={() => addToCart(product.id)} type="button" disabled={product.stock === 0 || pendingCartIds.has(product.id)}>
+                    {pendingCartIds.has(product.id) ? "Agregando..." : product.stock > 0 ? "Agregar" : "Sin stock"}
+                  </button>
                 </div>
               </article>
             ))}

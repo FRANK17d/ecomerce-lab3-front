@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import Link from "next/link";
 import { AuthProvider } from "./lib/auth-context";
+import { CartProvider } from "./lib/cart-context";
 import { ToastProvider } from "./lib/toast-context";
 import { SiteNav } from "./components/site-nav";
 import "./globals.css";
@@ -35,6 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
+        <CartProvider>
         <ToastProvider>
         <header className="site-shell bg-[var(--canvas)]">
           <div className="utility-bar mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-3 sm:px-5 lg:px-10">
@@ -91,6 +93,7 @@ export default function RootLayout({
           </div>
         </footer>
         </ToastProvider>
+        </CartProvider>
         </AuthProvider>
       </body>
     </html>

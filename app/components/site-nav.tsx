@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/auth-context";
+import { useCart } from "../lib/cart-context";
 
 export function SiteNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const { itemCount } = useCart();
 
   const links = [
     { href: "/", label: "Tienda" },
@@ -31,7 +33,14 @@ export function SiteNav() {
             href={link.href}
             key={link.href}
           >
-            {link.label}
+            <span className="nav-link-label">
+              {link.label}
+              {link.href === "/cart" && itemCount > 0 ? (
+                <span className="nav-cart-badge" aria-label={`${itemCount} en la bolsa`}>
+                  {itemCount > 99 ? "99+" : itemCount}
+                </span>
+              ) : null}
+            </span>
           </Link>
         );
       })}
