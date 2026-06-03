@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stride District — Frontend
 
-## Getting Started
+> Proyecto mantenido con [GitNexus](https://gitnexus.dev)
 
-First, run the development server:
+Tienda online **Stride District** construida con Next.js 16, React 19 y Tailwind CSS 4. Incluye catalogo de productos, autenticacion, carrito de compras, historial de pedidos y panel de administracion.
+
+## Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **UI:** React 19
+- **Estilos:** Tailwind CSS 4 + CSS custom properties
+- **Tipado:** TypeScript 5
+- **Imagenes:** next/image con dominio CDN dummyjson
+
+## Inicio rapido (local)
 
 ```bash
+# 1. Clonar e instalar
+git clone <repo-url> && cd front
+npm install
+
+# 2. Configurar variables de entorno
+cp .env.example .env.local
+
+# 3. Iniciar en desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables de entorno
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Descripcion | Default |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | URL del backend Express | `http://localhost:4000` |
 
-## Learn More
+## Rutas
 
-To learn more about Next.js, take a look at the following resources:
+| Ruta | Descripcion | Proteccion |
+|---|---|---|
+| `/` | Catalogo de productos (storefront) | Publica |
+| `/auth` | Login y registro | Publica |
+| `/account` | Perfil y resumen de cuenta | Requiere sesion |
+| `/cart` | Bolsa de compra | Requiere sesion |
+| `/orders` | Historial de pedidos | Requiere sesion |
+| `/admin` | Panel de administracion | Requiere rol admin |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Arquitectura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+├── components/      # Componentes de pagina (storefront, cart, admin, etc.)
+├── lib/
+│   ├── api.ts       # Cliente HTTP centralizado (apiFetch)
+│   ├── auth-context.tsx  # Contexto de autenticacion global
+│   ├── toast-context.tsx # Sistema de notificaciones
+│   └── types.ts     # Tipos TypeScript compartidos
+├── layout.tsx       # Layout raiz con providers
+└── [rutas]/page.tsx # Paginas de la aplicacion
+```
 
-## Deploy on Vercel
+## Despliegue en Vercel (CLI)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# 1. Instalar Vercel CLI
+npm i -g vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 2. Login
+vercel login
+
+# 3. Vincular proyecto (desde la carpeta front/)
+vercel link
+
+# 4. Configurar variable de entorno
+vercel env add NEXT_PUBLIC_API_URL
+# Ingresa la URL del backend en Heroku: https://ecommerce-lab3-back-fcg-xxxxx.herokuapp.com
+
+# 5. Desplegar a produccion
+vercel --prod
+
+# 6. Copiar la URL generada y actualizar CORS en Heroku
+heroku config:set CLIENT_URL=https://tu-proyecto.vercel.app --app ecommerce-lab3-back-fcg
+```
+
+## Scripts disponibles
+
+| Script | Descripcion |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con HMR |
+| `npm run build` | Build de produccion |
+| `npm start` | Servidor produccion local |
+| `npm run lint` | Linter ESLint |
+
+## Diseno responsive
+
+La aplicacion esta optimizada para todos los tamaños de pantalla:
+- **Mobile** (< 640px): navegacion vertical, grid de 1 columna, toasts full-width
+- **Tablet** (640-1024px): grid de 2 columnas, navegacion horizontal
+- **Desktop** (> 1024px): grid de 3-4 columnas, sidebar sticky en carrito
+
+## Licencia
+
+ISC
