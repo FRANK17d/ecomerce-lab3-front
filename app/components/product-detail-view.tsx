@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ProductImage } from "./product-image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
@@ -9,40 +9,6 @@ import { useAuth } from "../lib/auth-context";
 import { useCart } from "../lib/cart-context";
 import { useToast } from "../lib/toast-context";
 import type { Product } from "../lib/types";
-
-function isDummyCdn(url: string) {
-  try {
-    return new URL(url).hostname === "cdn.dummyjson.com";
-  } catch {
-    return false;
-  }
-}
-
-function ProductPicture({
-  src,
-  alt,
-  className,
-  fill,
-  sizes,
-  priority,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  fill?: boolean;
-  sizes?: string;
-  priority?: boolean;
-}) {
-  if (isDummyCdn(src)) {
-    return <Image src={src} alt={alt} className={className} fill={fill} sizes={sizes} priority={priority} />;
-  }
-
-  if (fill) {
-    return <img src={src} alt={alt} className={className} />;
-  }
-
-  return <img src={src} alt={alt} className={className} />;
-}
 
 function prettyCategory(value: string) {
   return value.replaceAll("-", " ");
@@ -147,7 +113,7 @@ export function ProductDetailView() {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
         <div className="product-image-stage relative aspect-square">
-          <ProductPicture
+          <ProductImage
             src={product.thumbnail}
             alt={product.name}
             fill
@@ -192,7 +158,7 @@ export function ProductDetailView() {
               <div className="flex flex-wrap gap-3">
                 {extraImages.map((url) => (
                   <div key={url} className="relative size-20 overflow-hidden rounded-[16px] border border-[var(--hairline-soft)] bg-[var(--soft-cloud)]">
-                    <ProductPicture src={url} alt="" fill className="object-contain p-1" sizes="80px" />
+                    <ProductImage src={url} alt="" fill className="object-contain p-1" sizes="80px" />
                   </div>
                 ))}
               </div>

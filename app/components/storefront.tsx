@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ProductImage } from "./product-image";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
@@ -121,7 +121,7 @@ export function Storefront() {
       <section className="grid gap-4 lg:grid-cols-[1fr_340px] lg:items-stretch">
         <div className="relative overflow-hidden rounded-[32px] bg-[var(--ink)] p-8 text-[var(--canvas)] sm:p-10">
           {heroProduct ? (
-            <Image src={heroProduct.thumbnail} alt={heroProduct.name} fill className="object-contain object-right-bottom p-6 opacity-20 sm:opacity-40 sm:p-10" loading="eager" sizes="(min-width: 1024px) 60vw, 100vw" />
+            <ProductImage src={heroProduct.thumbnail} alt={heroProduct.name} fill className="object-contain object-right-bottom p-6 opacity-20 sm:opacity-40 sm:p-10" loading="eager" sizes="(min-width: 1024px) 60vw, 100vw" />
           ) : null}
           <div className="relative z-10 flex min-h-[280px] flex-col justify-between">
             <div>
@@ -178,7 +178,7 @@ export function Storefront() {
             {featuredProducts.map((product) => (
               <article key={product.id} className="editorial-card">
                 <Link href={`/products/${product.id}`} className="absolute inset-0 z-[1]" aria-label={`Ver detalles de ${product.name}`} />
-                <Image src={product.thumbnail} alt={product.name} fill className="object-contain p-8" sizes="(min-width: 768px) 33vw, 100vw" />
+                <ProductImage src={product.thumbnail} alt={product.name} fill className="object-contain p-8" sizes="(min-width: 768px) 33vw, 100vw" />
                 <div className="absolute inset-x-0 bottom-0 z-10 p-5 text-[var(--canvas)]">
                   <p className="text-xs font-medium uppercase text-white/75">{prettyCategory(product.category)}</p>
                   <h3 className="mt-1 text-lg font-bold leading-tight">{product.name}</h3>
@@ -255,7 +255,7 @@ export function Storefront() {
               <article key={product.id} className="product-card flex flex-col">
                 <Link href={`/products/${product.id}`} className="block">
                   <div className="product-image-stage relative aspect-[4/3]">
-                    <Image src={product.thumbnail} alt={product.name} fill className="object-contain" loading={index === 0 ? "eager" : "lazy"} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
+                    <ProductImage src={product.thumbnail} alt={product.name} fill className="object-contain" loading={index === 0 ? "eager" : "lazy"} sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
                     {index < 4 ? <span className="absolute left-3 top-3 rounded-full bg-[var(--canvas)] px-3 py-1 text-xs font-medium shadow-sm">Nuevo</span> : null}
                   </div>
                   <div className="mt-3 flex flex-1 flex-col gap-2 px-1">

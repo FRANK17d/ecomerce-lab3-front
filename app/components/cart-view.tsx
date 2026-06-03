@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { ProductImage } from "./product-image";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
@@ -120,7 +120,7 @@ export function CartView() {
             {cart.items.map((item) => (
               <article key={item.id} className="panel grid gap-4 p-4 sm:grid-cols-[100px_1fr_auto] sm:items-center">
                 <div className="product-image-stage relative aspect-square overflow-hidden">
-                  <Image src={item.product.thumbnail} alt={item.product.name} fill className="object-contain" sizes="100px" />
+                  <ProductImage src={item.product.thumbnail} alt={item.product.name} fill className="object-contain" sizes="100px" />
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-[var(--mute)]">{item.product.category}</p>
